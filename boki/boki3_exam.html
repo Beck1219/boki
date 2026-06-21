@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日商簿記3級 模擬試験</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Meiryo','Yu Gothic',sans-serif;background:#eef2f7;color:#2c3e50;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.exam-header{background:linear-gradient(135deg,#1a3a6b,#2d6ab4);color:#fff;padding:20px 28px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.exam-header h1{font-size:1.3em}
+.exam-header .sub{font-size:.82em;opacity:.8;margin-top:3px}
+#timer{font-size:2em;font-weight:bold;background:rgba(0,0,0,.25);padding:8px 18px;border-radius:8px;letter-spacing:2px;font-variant-numeric:tabular-nums}
+#timer.warn{background:#c0392b;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.6}}
+.section{background:#fff;border-radius:10px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.sec-title{font-size:1.15em;font-weight:bold;color:#1a3a6b;border-left:4px solid #2d6ab4;padding-left:12px;margin-bottom:4px}
+.sec-sub{color:#888;font-size:.84em;margin-bottom:14px}
+.acc-hint{background:#f0f5ff;border:1px solid #c5d5f0;border-radius:6px;padding:9px 13px;font-size:.8em;color:#444;margin-bottom:16px}
+.qblock{background:#f8fafd;border:1px solid #dce8f8;border-radius:8px;padding:14px;margin-bottom:12px}
+.qnum{font-weight:bold;color:#2d6ab4;margin-bottom:5px}
+.qtext{margin-bottom:10px;font-size:.93em}
+table{width:100%;border-collapse:collapse}
+th{background:#2d6ab4;color:#fff;padding:7px 8px;text-align:center;font-size:.85em;white-space:nowrap}
+td{border:1px solid #ccd5e0;padding:4px 5px;text-align:center;font-size:.88em}
+td.ro{background:#f0f4fa;font-weight:600;color:#333}
+select,input[type=number]{width:100%;padding:4px 5px;border:1px solid #b0bec5;border-radius:4px;font-size:.88em;font-family:inherit;background:#fff;color:#333}
+input[type=number]{text-align:right}
+.ok-cell{background:#d4f0dc!important;border-color:#52b788!important}
+.ng-cell{background:#fde8e8!important;border-color:#e57373!important}
+.submit-area{text-align:center;padding:22px 0}
+.btn-submit{background:#27ae60;color:#fff;border:none;padding:13px 48px;font-size:1.1em;border-radius:30px;cursor:pointer;box-shadow:0 4px 14px rgba(39,174,96,.4);transition:.2s}
+.btn-submit:hover{background:#1e8449;transform:translateY(-2px)}
+.btn-reset{background:#7f8c8d;color:#fff;border:none;padding:10px 28px;font-size:.95em;border-radius:20px;cursor:pointer;margin-left:14px}
+#results{display:none;margin-top:4px}
+.score-hdr{background:linear-gradient(135deg,#1a3a6b,#2d6ab4);color:#fff;border-radius:12px;padding:28px;text-align:center;margin-bottom:18px}
+.big-score{font-size:3.8em;font-weight:bold}
+.score-label{font-size:.95em;opacity:.8}
+.pass-msg{margin-top:10px;font-size:1.1em;font-weight:bold}
+.pass-msg.pass{color:#5efb78}
+.pass-msg.fail{color:#ff8a80}
+.rsec{background:#fff;border-radius:10px;padding:18px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.rsec h3{font-size:1em;margin-bottom:10px;color:#1a3a6b;border-left:3px solid #2d6ab4;padding-left:9px}
+.rq{padding:7px 10px;border-radius:6px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.rq.ok{background:#e6f4ea;border-left:3px solid #52b788}
+.rq.ng{background:#fde8e8;border-left:3px solid #e57373}
+.rq-body{flex:1}
+.rq-pts{font-weight:bold;white-space:nowrap}
+.rq-ans{font-size:.8em;color:#555;margin-top:3px}
+.bar-wrap{background:#e0e0e0;border-radius:99px;height:10px;margin:5px 0 2px}
+.bar{height:100%;border-radius:99px;background:#27ae60;transition:width 1s}
+.bar.mid{background:#f39c12}
+.bar.low{background:#e74c3c}
+.sec-score-line{display:flex;justify-content:space-between;font-size:.88em;margin-bottom:2px}
+/* 精算表 */
+.sansan th,.sansan td{font-size:.76em;padding:3px 3px}
+.sansan input[type=number]{font-size:.82em;padding:2px 3px}
+.sansan .sub-h{background:#4a7fc1}
+.sansan td.nm{text-align:left;padding-left:6px;white-space:nowrap}
+/* ledger */
+.ledger th,.ledger td{font-size:.86em}
+select.narrow{font-size:.8em}
+@media(max-width:680px){
+  .exam-header{flex-direction:column;gap:10px;text-align:center}
+  #timer{font-size:1.5em}
+  select,input[type=number]{font-size:16px!important;min-height:40px}
+  .qblock table thead{display:none}
+  .qblock table tbody tr{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:5px;padding:8px 0;border-bottom:1px solid #dce8f8}
+  .qblock table td{border:1px solid #ccd5e0;border-radius:5px;padding:5px}
+  .qblock table td:nth-child(1){grid-column:1;grid-row:1}
+  .qblock table td:nth-child(2){grid-column:1;grid-row:2}
+  .qblock table td:nth-child(3){grid-column:2;grid-row:1}
+  .qblock table td:nth-child(4){grid-column:2;grid-row:2}
+  .qblock table td:nth-child(1)::before{content:'借方科目';display:block;font-size:.7em;font-weight:bold;color:#1a3a6b;margin-bottom:2px}
+  .qblock table td:nth-child(2)::before{content:'借方金額';display:block;font-size:.7em;font-weight:bold;color:#1a3a6b;margin-bottom:2px}
+  .qblock table td:nth-child(3)::before{content:'貸方科目';display:block;font-size:.7em;font-weight:bold;color:#27ae60;margin-bottom:2px}
+  .qblock table td:nth-child(4)::before{content:'貸方金額';display:block;font-size:.7em;font-weight:bold;color:#27ae60;margin-bottom:2px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="exam-header">
+  <div>
+    <div class="sub" style="margin-bottom:3px;font-size:.9em;opacity:.6">日商簿記検定</div>
+    <h1>３級 模擬試験</h1>
+    <div class="sub">制限時間 60分 ／ 満点 100点 ／ 合格基準 70点以上</div>
+  </div>
+  <div id="timer">60:00</div>
+</header>
+
+<!-- ===== 第1問 ===== -->
+<div class="section">
+  <div class="sec-title">第１問（45点）</div>
+  <div class="sec-sub">次の各取引を仕訳しなさい。（各5点）</div>
+  <div class="acc-hint"><strong>【使用可能な勘定科目】</strong>　現金 / 当座預金 / 普通預金 / 売掛金 / 受取手形 / 繰越商品 / 備品 / 前払家賃 / 買掛金 / 支払手形 / 借入金 / 貸倒引当金 / 資本金 / 売上 / 仕入 / 給料 / 支払家賃 / 支払利息 / 受取利息 / 貸倒引当金繰入 / 貸倒損失 / 減価償却費 / 現金過不足</div>
+
+  <div class="qblock" id="q1">
+    <div class="qnum">問１</div>
+    <div class="qtext">商品 ¥150,000 を仕入れ、代金のうち ¥50,000 は現金で支払い、残額は掛けとした。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q1_d1a"></select></td><td><input type="number" id="q1_d1v" min="0"></td><td><select id="q1_c1a"></select></td><td><input type="number" id="q1_c1v" min="0"></td></tr>
+      <tr><td><select id="q1_d2a"></select></td><td><input type="number" id="q1_d2v" min="0"></td><td><select id="q1_c2a"></select></td><td><input type="number" id="q1_c2v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q2">
+    <div class="qnum">問２</div>
+    <div class="qtext">売掛金 ¥200,000 を現金で回収した。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q2_d1a"></select></td><td><input type="number" id="q2_d1v" min="0"></td><td><select id="q2_c1a"></select></td><td><input type="number" id="q2_c1v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q3">
+    <div class="qnum">問３</div>
+    <div class="qtext">備品 ¥300,000 を購入し、代金は小切手を振り出して支払った。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q3_d1a"></select></td><td><input type="number" id="q3_d1v" min="0"></td><td><select id="q3_c1a"></select></td><td><input type="number" id="q3_c1v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q4">
+    <div class="qnum">問４</div>
+    <div class="qtext">得意先が倒産し、売掛金 ¥80,000 が回収不能となった。なお、貸倒引当金の残高は ¥30,000 である。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q4_d1a"></select></td><td><input type="number" id="q4_d1v" min="0"></td><td><select id="q4_c1a"></select></td><td><input type="number" id="q4_c1v" min="0"></td></tr>
+      <tr><td><select id="q4_d2a"></select></td><td><input type="number" id="q4_d2v" min="0"></td><td><select id="q4_c2a"></select></td><td><input type="number" id="q4_c2v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q5">
+    <div class="qnum">問５</div>
+    <div class="qtext">借入金 ¥500,000 の返済期日が到来し、元金と利息 ¥5,000 をあわせて普通預金から支払った。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q5_d1a"></select></td><td><input type="number" id="q5_d1v" min="0"></td><td><select id="q5_c1a"></select></td><td><input type="number" id="q5_c1v" min="0"></td></tr>
+      <tr><td><select id="q5_d2a"></select></td><td><input type="number" id="q5_d2v" min="0"></td><td><select id="q5_c2a"></select></td><td><input type="number" id="q5_c2v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q6">
+    <div class="qnum">問６</div>
+    <div class="qtext">従業員の給料 ¥250,000 を普通預金から振り込んだ。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q6_d1a"></select></td><td><input type="number" id="q6_d1v" min="0"></td><td><select id="q6_c1a"></select></td><td><input type="number" id="q6_c1v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q7">
+    <div class="qnum">問７</div>
+    <div class="qtext">商品 ¥120,000 を売り上げ、代金は約束手形で受け取った。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q7_d1a"></select></td><td><input type="number" id="q7_d1v" min="0"></td><td><select id="q7_c1a"></select></td><td><input type="number" id="q7_c1v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q8">
+    <div class="qnum">問８</div>
+    <div class="qtext">事務所の家賃 ¥60,000 を現金で支払った。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q8_d1a"></select></td><td><input type="number" id="q8_d1v" min="0"></td><td><select id="q8_c1a"></select></td><td><input type="number" id="q8_c1v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="qblock" id="q9">
+    <div class="qnum">問９</div>
+    <div class="qtext">現金の実際有高を調べたところ、帳簿残高より ¥3,000 少なかった。原因は不明である。</div>
+    <table><thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+    <tbody>
+      <tr><td><select id="q9_d1a"></select></td><td><input type="number" id="q9_d1v" min="0"></td><td><select id="q9_c1a"></select></td><td><input type="number" id="q9_c1v" min="0"></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- ===== 第2問 ===== -->
+<div class="section">
+  <div class="sec-title">第２問（20点）</div>
+  <div class="sec-sub">次の４月中の取引にもとづいて、<strong>売掛金元帳（Ａ商店）</strong>を完成させなさい。</div>
+  <div style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:6px;padding:12px;margin-bottom:14px;font-size:.88em">
+    <strong>【４月中の取引】</strong>
+    <ul style="margin-top:6px;margin-left:18px;line-height:1.9">
+      <li>4/1　前月繰越 ¥180,000</li>
+      <li>4/5　Ａ商店へ商品 ¥220,000 を掛けで売り上げた</li>
+      <li>4/12　Ａ商店から売掛金 ¥180,000 を現金で回収した</li>
+      <li>4/20　Ａ商店へ商品 ¥150,000 を掛けで売り上げた</li>
+      <li>4/28　Ａ商店から売掛金 ¥100,000 が当座預金に振り込まれた</li>
+    </ul>
+  </div>
+  <p style="font-weight:bold;margin-bottom:8px;font-size:.9em">Ａ商店（売掛金元帳）</p>
+  <table class="ledger">
+    <thead><tr><th style="width:8%">日付</th><th style="width:22%">摘要</th><th style="width:18%">借方</th><th style="width:18%">貸方</th><th style="width:18%">残高</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="ro">4/1</td>
+        <td class="ro">前月繰越</td>
+        <td class="ro">180,000</td>
+        <td class="ro">—</td>
+        <td class="ro">180,000</td>
+      </tr>
+      <tr>
+        <td class="ro">4/5</td>
+        <td><select id="l1_摘" class="narrow"></select></td>
+        <td><input type="number" id="l1_d" min="0"></td>
+        <td><input type="number" id="l1_c" min="0"></td>
+        <td><input type="number" id="l1_b" min="0"></td>
+      </tr>
+      <tr>
+        <td class="ro">4/12</td>
+        <td><select id="l2_摘" class="narrow"></select></td>
+        <td><input type="number" id="l2_d" min="0"></td>
+        <td><input type="number" id="l2_c" min="0"></td>
+        <td><input type="number" id="l2_b" min="0"></td>
+      </tr>
+      <tr>
+        <td class="ro">4/20</td>
+        <td><select id="l3_摘" class="narrow"></select></td>
+        <td><input type="number" id="l3_d" min="0"></td>
+        <td><input type="number" id="l3_c" min="0"></td>
+        <td><input type="number" id="l3_b" min="0"></td>
+      </tr>
+      <tr>
+        <td class="ro">4/28</td>
+        <td><select id="l4_摘" class="narrow"></select></td>
+        <td><input type="number" id="l4_d" min="0"></td>
+        <td><input type="number" id="l4_c" min="0"></td>
+        <td><input type="number" id="l4_b" min="0"></td>
+      </tr>
+      <tr>
+        <td class="ro">4/30</td>
+        <td class="ro">次月繰越</td>
+        <td class="ro">—</td>
+        <td><input type="number" id="l5_c" min="0"></td>
+        <td class="ro">—</td>
+      </tr>
+      <tr style="background:#f0f4fa">
+        <td class="ro"></td>
+        <td class="ro" style="font-weight:bold">合　計</td>
+        <td><input type="number" id="l6_d" min="0"></td>
+        <td><input type="number" id="l6_c" min="0"></td>
+        <td class="ro">—</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== 第3問 ===== -->
+<div class="section">
+  <div class="sec-title">第３問（35点）</div>
+  <div class="sec-sub">次の残高試算表と決算整理事項にもとづいて、精算表を完成させなさい。</div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px">
+    <div style="flex:1;min-width:260px;background:#f8fafd;border:1px solid #dce8f8;border-radius:8px;padding:14px">
+      <p style="font-weight:bold;margin-bottom:8px;font-size:.9em">残高試算表（×2年3月31日）</p>
+      <table style="font-size:.85em">
+        <thead><tr><th>勘定科目</th><th>借方</th><th>貸方</th></tr></thead>
+        <tbody>
+          <tr><td class="ro" style="text-align:left">現金</td><td class="ro">52,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">当座預金</td><td class="ro">248,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">売掛金</td><td class="ro">300,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">繰越商品</td><td class="ro">45,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">備品</td><td class="ro">400,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">買掛金</td><td class="ro">—</td><td class="ro">130,000</td></tr>
+          <tr><td class="ro" style="text-align:left">借入金</td><td class="ro">—</td><td class="ro">150,000</td></tr>
+          <tr><td class="ro" style="text-align:left">貸倒引当金</td><td class="ro">—</td><td class="ro">3,000</td></tr>
+          <tr><td class="ro" style="text-align:left">備品減価償却累計額</td><td class="ro">—</td><td class="ro">80,000</td></tr>
+          <tr><td class="ro" style="text-align:left">資本金</td><td class="ro">—</td><td class="ro">600,000</td></tr>
+          <tr><td class="ro" style="text-align:left">売上</td><td class="ro">—</td><td class="ro">917,000</td></tr>
+          <tr><td class="ro" style="text-align:left">仕入</td><td class="ro">640,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">給料</td><td class="ro">120,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">支払家賃</td><td class="ro">72,000</td><td class="ro">—</td></tr>
+          <tr><td class="ro" style="text-align:left">支払利息</td><td class="ro">3,000</td><td class="ro">—</td></tr>
+          <tr style="font-weight:bold;background:#e8edf5"><td class="ro" style="text-align:left">合計</td><td class="ro">1,880,000</td><td class="ro">1,880,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="flex:1;min-width:260px;background:#f8fafd;border:1px solid #dce8f8;border-radius:8px;padding:14px">
+      <p style="font-weight:bold;margin-bottom:8px;font-size:.9em">決算整理事項</p>
+      <ol style="font-size:.88em;margin-left:18px;line-height:2">
+        <li><strong>売上原価の計算（三分法）</strong><br>期末商品棚卸高：¥55,000</li>
+        <li><strong>貸倒引当金の設定</strong><br>売掛金残高の２％（差額補充法）</li>
+        <li><strong>備品の減価償却</strong><br>耐用年数５年・残存価額ゼロ・定額法</li>
+        <li><strong>家賃の前払い</strong><br>支払家賃のうち ¥6,000 は翌期分</li>
+      </ol>
+    </div>
+  </div>
+
+  <p style="font-weight:bold;margin-bottom:8px;font-size:.9em">精算表</p>
+  <div style="overflow-x:auto">
+  <table class="sansan">
+    <thead>
+      <tr>
+        <th rowspan="2" style="width:130px;min-width:130px">勘定科目</th>
+        <th colspan="2" class="sub-h">残高試算表</th>
+        <th colspan="2" class="sub-h">修正記入</th>
+        <th colspan="2" class="sub-h">損益計算書</th>
+        <th colspan="2" class="sub-h">貸借対照表</th>
+      </tr>
+      <tr>
+        <th style="width:72px">借方</th><th style="width:72px">貸方</th>
+        <th style="width:72px">借方</th><th style="width:72px">貸方</th>
+        <th style="width:72px">借方</th><th style="width:72px">貸方</th>
+        <th style="width:72px">借方</th><th style="width:72px">貸方</th>
+      </tr>
+    </thead>
+    <tbody id="sansan-body">
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="submit-area">
+  <button class="btn-submit" onclick="submitExam()">採　点　す　る</button>
+  <button class="btn-reset" onclick="resetExam()">リセット</button>
+</div>
+
+<div id="results"></div>
+
+</div><!-- /wrap -->
+
+<script>
+// ===== 定数 =====
+const ACCOUNTS = ['','現金','当座預金','普通預金','売掛金','受取手形','繰越商品','備品','前払家賃','買掛金','支払手形','借入金','貸倒引当金','資本金','売上','仕入','給料','支払家賃','支払利息','受取利息','貸倒引当金繰入','貸倒損失','減価償却費','現金過不足'];
+const LEDGER_ACCS = ['','売上','現金','当座預金','次月繰越'];
+
+// ===== タイマー =====
+let timeLeft = 3600;
+const timerEl = document.getElementById('timer');
+const timerInt = setInterval(() => {
+  timeLeft--;
+  const m = String(Math.floor(timeLeft/60)).padStart(2,'0');
+  const s = String(timeLeft%60).padStart(2,'0');
+  timerEl.textContent = m+':'+s;
+  if(timeLeft<=600) timerEl.classList.add('warn');
+  if(timeLeft<=0){ clearInterval(timerInt); submitExam(); }
+},1000);
+
+// ===== セレクト生成 =====
+function makeOpts(list){ return list.map(a=>`<option value="${a}">${a||'-- 選択 --'}</option>`).join(''); }
+document.querySelectorAll('select').forEach(s=>{
+  if(s.classList.contains('narrow')) s.innerHTML = makeOpts(LEDGER_ACCS);
+  else s.innerHTML = makeOpts(ACCOUNTS);
+});
+
+// ===== 精算表データ =====
+const SANSAN = [
+  {nm:'現金',          tb_d:52000,  tb_c:0,      m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:52000,  bs_c:0      },
+  {nm:'当座預金',      tb_d:248000, tb_c:0,      m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:248000, bs_c:0      },
+  {nm:'売掛金',        tb_d:300000, tb_c:0,      m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:300000, bs_c:0      },
+  {nm:'繰越商品',      tb_d:45000,  tb_c:0,      m_d:55000, m_c:45000, pl_d:0,      pl_c:0,      bs_d:55000,  bs_c:0      },
+  {nm:'備品',          tb_d:400000, tb_c:0,      m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:400000, bs_c:0      },
+  {nm:'買掛金',        tb_d:0,      tb_c:130000, m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:0,      bs_c:130000 },
+  {nm:'借入金',        tb_d:0,      tb_c:150000, m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:0,      bs_c:150000 },
+  {nm:'貸倒引当金',    tb_d:0,      tb_c:3000,   m_d:0,     m_c:3000,  pl_d:0,      pl_c:0,      bs_d:0,      bs_c:6000   },
+  {nm:'備品減価償却累計額',tb_d:0,  tb_c:80000,  m_d:0,     m_c:80000, pl_d:0,      pl_c:0,      bs_d:0,      bs_c:160000 },
+  {nm:'資本金',        tb_d:0,      tb_c:600000, m_d:0,     m_c:0,     pl_d:0,      pl_c:0,      bs_d:0,      bs_c:600000 },
+  {nm:'売上',          tb_d:0,      tb_c:917000, m_d:0,     m_c:0,     pl_d:0,      pl_c:917000, bs_d:0,      bs_c:0      },
+  {nm:'仕入',          tb_d:640000, tb_c:0,      m_d:45000, m_c:55000, pl_d:630000, pl_c:0,      bs_d:0,      bs_c:0      },
+  {nm:'給料',          tb_d:120000, tb_c:0,      m_d:0,     m_c:0,     pl_d:120000, pl_c:0,      bs_d:0,      bs_c:0      },
+  {nm:'支払家賃',      tb_d:72000,  tb_c:0,      m_d:0,     m_c:6000,  pl_d:66000,  pl_c:0,      bs_d:0,      bs_c:0      },
+  {nm:'支払利息',      tb_d:3000,   tb_c:0,      m_d:0,     m_c:0,     pl_d:3000,   pl_c:0,      bs_d:0,      bs_c:0      },
+  {nm:'前払家賃',      tb_d:0,      tb_c:0,      m_d:6000,  m_c:0,     pl_d:0,      pl_c:0,      bs_d:6000,   bs_c:0      },
+  {nm:'貸倒引当金繰入',tb_d:0,      tb_c:0,      m_d:3000,  m_c:0,     pl_d:3000,   pl_c:0,      bs_d:0,      bs_c:0      },
+  {nm:'減価償却費',    tb_d:0,      tb_c:0,      m_d:80000, m_c:0,     pl_d:80000,  pl_c:0,      bs_d:0,      bs_c:0      },
+  {nm:'当期純利益',    tb_d:0,      tb_c:0,      m_d:0,     m_c:0,     pl_d:15000,  pl_c:0,      bs_d:0,      bs_c:15000  },
+];
+
+// 精算表HTML生成
+const tbody = document.getElementById('sansan-body');
+SANSAN.forEach((r,i)=>{
+  const ro = (v)=> v===0 ? `<td class="ro">—</td>` : `<td class="ro">${v.toLocaleString()}</td>`;
+  const inp = (id)=>`<td><input type="number" id="${id}" min="0" placeholder="0"></td>`;
+  const hasM = r.m_d!==0||r.m_c!==0;
+  const hasPL= r.pl_d!==0||r.pl_c!==0;
+  const hasBS= r.bs_d!==0||r.bs_c!==0;
+  // 修正記入欄
+  const mdCell = (hasM||r.nm==='仕入'||r.nm==='繰越商品'||r.nm==='貸倒引当金'||r.nm==='備品減価償却累計額'||r.nm==='支払家賃'||r.nm==='前払家賃'||r.nm==='貸倒引当金繰入'||r.nm==='減価償却費') ? inp(`s${i}_md`) : `<td class="ro">—</td>`;
+  const mcCell = (hasM||r.nm==='仕入'||r.nm==='繰越商品'||r.nm==='貸倒引当金'||r.nm==='備品減価償却累計額'||r.nm==='支払家賃'||r.nm==='前払家賃'||r.nm==='貸倒引当金繰入'||r.nm==='減価償却費') ? inp(`s${i}_mc`) : `<td class="ro">—</td>`;
+  // 損益計算書欄
+  const pldCell = (hasPL||r.nm==='売上'||r.nm==='仕入'||r.nm==='給料'||r.nm==='支払家賃'||r.nm==='支払利息'||r.nm==='貸倒引当金繰入'||r.nm==='減価償却費'||r.nm==='当期純利益') ? inp(`s${i}_pd`) : `<td class="ro">—</td>`;
+  const plcCell = (hasPL||r.nm==='売上'||r.nm==='仕入'||r.nm==='給料'||r.nm==='支払家賃'||r.nm==='支払利息'||r.nm==='貸倒引当金繰入'||r.nm==='減価償却費'||r.nm==='当期純利益') ? inp(`s${i}_pc`) : `<td class="ro">—</td>`;
+  // 貸借対照表欄
+  const bsdCell = (hasBS||r.tb_d!==0||r.nm==='繰越商品'||r.nm==='前払家賃'||r.nm==='当期純利益') ? inp(`s${i}_bd`) : `<td class="ro">—</td>`;
+  const bscCell = (hasBS||r.tb_c!==0||r.nm==='貸倒引当金'||r.nm==='備品減価償却累計額'||r.nm==='当期純利益') ? inp(`s${i}_bc`) : `<td class="ro">—</td>`;
+
+  const tbdCell = r.tb_d ? `<td class="ro">${r.tb_d.toLocaleString()}</td>` : `<td class="ro">—</td>`;
+  const tbcCell = r.tb_c ? `<td class="ro">${r.tb_c.toLocaleString()}</td>` : `<td class="ro">—</td>`;
+
+  tbody.innerHTML += `<tr>
+    <td class="ro nm">${r.nm}</td>
+    ${tbdCell}${tbcCell}
+    ${mdCell}${mcCell}
+    ${pldCell}${plcCell}
+    ${bsdCell}${bscCell}
+  </tr>`;
+});
+
+// ===== 正解定義 =====
+// 各問の正解（debit/creditは順不同で照合）
+const Q1_ANS = [
+  // q1
+  { d:[{a:'仕入',v:150000}], c:[{a:'現金',v:50000},{a:'買掛金',v:100000}] },
+  // q2
+  { d:[{a:'現金',v:200000}], c:[{a:'売掛金',v:200000}] },
+  // q3
+  { d:[{a:'備品',v:300000}], c:[{a:'当座預金',v:300000}] },
+  // q4
+  { d:[{a:'貸倒引当金',v:30000},{a:'貸倒損失',v:50000}], c:[{a:'売掛金',v:80000}] },
+  // q5
+  { d:[{a:'借入金',v:500000},{a:'支払利息',v:5000}], c:[{a:'普通預金',v:505000}] },
+  // q6
+  { d:[{a:'給料',v:250000}], c:[{a:'普通預金',v:250000}] },
+  // q7
+  { d:[{a:'受取手形',v:120000}], c:[{a:'売上',v:120000}] },
+  // q8
+  { d:[{a:'支払家賃',v:60000}], c:[{a:'現金',v:60000}] },
+  // q9
+  { d:[{a:'現金過不足',v:3000}], c:[{a:'現金',v:3000}] },
+];
+
+// 精算表の正解（セルが入力可能なもの）
+const SANSAN_ANS = {};
+SANSAN.forEach((r,i)=>{
+  SANSAN_ANS[`s${i}_md`] = r.m_d;
+  SANSAN_ANS[`s${i}_mc`] = r.m_c;
+  SANSAN_ANS[`s${i}_pd`] = r.pl_d;
+  SANSAN_ANS[`s${i}_pc`] = r.pl_c;
+  SANSAN_ANS[`s${i}_bd`] = r.bs_d;
+  SANSAN_ANS[`s${i}_bc`] = r.bs_c;
+});
+
+// 元帳正解
+const LEDGER_ANS = {
+  l1_摘:'売上',   l1_d:220000, l1_c:0,       l1_b:400000,
+  l2_摘:'現金',   l2_d:0,      l2_c:180000,  l2_b:220000,
+  l3_摘:'売上',   l3_d:150000, l3_c:0,       l3_b:370000,
+  l4_摘:'当座預金',l4_d:0,     l4_c:100000,  l4_b:270000,
+  l5_c:270000,
+  l6_d:550000, l6_c:550000,
+};
+
+// ===== ユーティリティ =====
+function getVal(id){ const el=document.getElementById(id); if(!el)return null; if(el.tagName==='SELECT')return el.value; return parseInt(el.value)||0; }
+function norm(entries){ return entries.filter(e=>e.a&&e.v).map(e=>e.a+'|'+e.v).sort().join(','); }
+
+function readEntries(prefix, rows){
+  const d=[], c=[];
+  for(let r=1;r<=rows;r++){
+    const da=getVal(`${prefix}_d${r}a`), dv=getVal(`${prefix}_d${r}v`);
+    const ca=getVal(`${prefix}_c${r}a`), cv=getVal(`${prefix}_c${r}v`);
+    if(da&&dv) d.push({a:da,v:dv});
+    if(ca&&cv) c.push({a:ca,v:cv});
+  }
+  return {d,c};
+}
+
+function scoreQ1(){
+  const rows=[2,1,1,2,2,1,1,1,1];
+  let total=0;
+  const details=[];
+  Q1_ANS.forEach((ans,i)=>{
+    const qn=i+1;
+    const prefix='q'+qn;
+    const user=readEntries(prefix,rows[i]);
+    const dOk = norm(user.d)===norm(ans.d.map(e=>({a:e.a,v:e.v})));
+    const cOk = norm(user.c)===norm(ans.c.map(e=>({a:e.a,v:e.v})));
+    const pts = (dOk&&cOk)?5:0;
+    total+=pts;
+    // mark cells
+    const mark=(side,ok)=>{
+      for(let r=1;r<=rows[i];r++){
+        const aid=`${prefix}_${side}${r}a`, vid=`${prefix}_${side}${r}v`;
+        [aid,vid].forEach(id=>{
+          const el=document.getElementById(id);
+          if(el){ el.classList.remove('ok-cell','ng-cell'); el.classList.add(ok?'ok-cell':'ng-cell'); }
+        });
+      }
+    };
+    mark('d',dOk); mark('c',cOk);
+    const ansText = ans.d.map(e=>`${e.a} ${e.v.toLocaleString()}`).join(' / ')
+      + ' ｜ '
+      + ans.c.map(e=>`${e.a} ${e.v.toLocaleString()}`).join(' / ');
+    details.push({qn,pts,max:5,ok:dOk&&cOk,ansText});
+  });
+  return {total,max:45,details};
+}
+
+function scoreLedger(){
+  let pts=0,max=20;
+  const fields = ['l1_摘','l1_d','l1_c','l1_b','l2_摘','l2_d','l2_c','l2_b','l3_摘','l3_d','l3_c','l3_b','l4_摘','l4_d','l4_c','l4_b','l5_c','l6_d','l6_c'];
+  // 20 points: 4 main rows × 4 pts + 次月繰越1pt + 合計2pt... let's simplify: 20 items each worth 1pt then scale
+  // Actually: 4 rows × 4cells = 16 cells + l5_c(2pt) + l6_d+l6_c(1pt each) = 20
+  const weights = {l1_摘:1,l1_d:1,l1_c:1,l1_b:1, l2_摘:1,l2_d:1,l2_c:1,l2_b:1, l3_摘:1,l3_d:1,l3_c:1,l3_b:1, l4_摘:1,l4_d:1,l4_c:1,l4_b:1, l5_c:2, l6_d:1,l6_c:1};
+  const results={};
+  for(const [k,w] of Object.entries(weights)){
+    const el=document.getElementById(k);
+    if(!el){results[k]={ok:false,w};continue;}
+    let uv = el.tagName==='SELECT'?el.value:(parseInt(el.value)||0);
+    let av = LEDGER_ANS[k];
+    const ok = String(uv)===String(av);
+    if(ok) pts+=w;
+    el.classList.remove('ok-cell','ng-cell');
+    el.classList.add(ok?'ok-cell':'ng-cell');
+    results[k]={ok,w};
+  }
+  return {total:pts,max};
+}
+
+function scoreSansan(){
+  // Count only editable cells (non-readonly)
+  let total=0, max=0;
+  const details=[];
+  for(const [id,ans] of Object.entries(SANSAN_ANS)){
+    const el=document.getElementById(id);
+    if(!el) continue;
+    max++;
+    const uv=parseInt(el.value)||0;
+    const ok=(uv===ans);
+    if(ok) total++;
+    el.classList.remove('ok-cell','ng-cell');
+    el.classList.add(ok?'ok-cell':'ng-cell');
+    details.push({id,ok,ans,uv});
+  }
+  // Scale to 35 pts
+  const scaled = Math.round((total/max)*35);
+  return {total:scaled,max:35,raw:total,rawMax:max,details};
+}
+
+// ===== 採点実行 =====
+function submitExam(){
+  clearInterval(timerInt);
+  const r1=scoreQ1();
+  const r2=scoreLedger();
+  const r3=scoreSansan();
+  const grand=r1.total+r2.total+r3.total;
+  const pass=grand>=70;
+
+  // 結果HTML
+  let html=`
+  <div class="score-hdr">
+    <div class="score-label">合計得点</div>
+    <div class="big-score">${grand} <span style="font-size:.45em">/ 100点</span></div>
+    <div class="pass-msg ${pass?'pass':'fail'}">${pass?'✓ 合格点に達しました！（70点以上）':'✗ 合格点に達しませんでした（70点以上で合格）'}</div>
+  </div>`;
+
+  // 第1問
+  html+=`<div class="rsec"><h3>第１問 得点：${r1.total} / ${r1.max}点</h3>`;
+  const pct1=r1.total/r1.max*100;
+  html+=`<div class="bar-wrap"><div class="bar ${pct1>=60?'':'low'}" style="width:${pct1}%"></div></div>
+  <div class="sec-score-line"><span>${r1.total}点</span><span>${r1.max}点</span></div>`;
+  r1.details.forEach(d=>{
+    html+=`<div class="rq ${d.ok?'ok':'ng'}">
+      <div class="rq-body">
+        <span class="q-label">問${d.qn}</span>
+        ${d.ok?'　正解':'　不正解'}
+        <div class="rq-ans">【正解】${d.ansText}</div>
+      </div>
+      <div class="rq-pts">${d.pts}/${d.max}点</div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // 第2問
+  const pct2=r2.total/r2.max*100;
+  html+=`<div class="rsec"><h3>第２問 得点：${r2.total} / ${r2.max}点</h3>
+  <div class="bar-wrap"><div class="bar ${pct2>=60?'':'low'}" style="width:${pct2}%"></div></div>
+  <div class="sec-score-line"><span>${r2.total}点</span><span>${r2.max}点</span></div>
+  <div class="rq ${r2.total===r2.max?'ok':'ng'}">
+    <div class="rq-body">
+      <span class="q-label">Ａ商店　売掛金元帳</span>
+      <div class="rq-ans">【正解】4/5:売上¥220,000（残高¥400,000）／4/12:現金¥180,000（残高¥220,000）／4/20:売上¥150,000（残高¥370,000）／4/28:当座預金¥100,000（残高¥270,000）／次月繰越¥270,000／合計¥550,000</div>
+    </div>
+    <div class="rq-pts">${r2.total}/${r2.max}点</div>
+  </div></div>`;
+
+  // 第3問
+  const pct3=r3.total/r3.max*100;
+  html+=`<div class="rsec"><h3>第３問 得点：${r3.total} / ${r3.max}点</h3>
+  <div class="bar-wrap"><div class="bar ${pct3>=60?'':'low'}" style="width:${pct3}%"></div></div>
+  <div class="sec-score-line"><span>${r3.total}点</span><span>${r3.max}点</span></div>
+  <div style="font-size:.85em;color:#555;margin-top:8px">
+    <strong>【精算表 正解のポイント】</strong><br>
+    ① 売上原価：仕入¥640,000＋期首¥45,000－期末¥55,000＝<strong>¥630,000</strong><br>
+    ② 貸倒引当金繰入：¥300,000×2%－¥3,000＝<strong>¥3,000</strong>（貸倒引当金残高→¥6,000）<br>
+    ③ 減価償却費：¥400,000÷5年＝<strong>¥80,000</strong>（累計額→¥160,000）<br>
+    ④ 前払家賃：支払家賃¥72,000－¥6,000＝<strong>¥66,000</strong>（前払家賃¥6,000 B/S計上）<br>
+    ⑤ 当期純利益：¥917,000－¥902,000＝<strong>¥15,000</strong>
+  </div>
+  </div>`;
+
+  const resultsEl=document.getElementById('results');
+  resultsEl.innerHTML=html;
+  resultsEl.style.display='block';
+  resultsEl.scrollIntoView({behavior:'smooth'});
+}
+
+function resetExam(){
+  if(!confirm('回答をすべてリセットしますか？')) return;
+  document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+  document.querySelectorAll('input[type=number]').forEach(i=>i.value='');
+  document.querySelectorAll('.ok-cell,.ng-cell').forEach(el=>el.classList.remove('ok-cell','ng-cell'));
+  document.getElementById('results').style.display='none';
+  timeLeft=3600;
+  timerEl.classList.remove('warn');
+}
+</script>
+</body>
+</html>

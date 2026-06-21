@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>簿記３級 仕訳問題 50問</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Meiryo','Yu Gothic',sans-serif;background:#eef2f7;color:#2c3e50;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding:16px}
+header{background:linear-gradient(135deg,#1a3a6b,#2d6ab4);color:#fff;padding:18px 24px;border-radius:12px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+header h1{font-size:1.3em}
+header .sub{font-size:.82em;opacity:.8;margin-top:3px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.filter-btn{padding:6px 14px;border-radius:20px;border:2px solid #2d6ab4;background:#fff;color:#2d6ab4;cursor:pointer;font-size:.83em;font-family:inherit;transition:.15s}
+.filter-btn.active{background:#2d6ab4;color:#fff}
+.progress{background:#fff;border-radius:8px;padding:10px 16px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;align-items:center;gap:14px;font-size:.88em}
+.prog-bar-wrap{flex:1;background:#e0e0e0;border-radius:99px;height:10px}
+.prog-bar{background:#27ae60;height:100%;border-radius:99px;transition:width .4s}
+.topic-header{background:#e8edf8;border-left:4px solid #2d6ab4;padding:8px 14px;border-radius:0 6px 6px 0;margin:18px 0 10px;font-weight:bold;font-size:.92em;color:#1a3a6b}
+.qblock{background:#fff;border:1px solid #dce8f8;border-radius:8px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:.2s}
+.qblock.answered{border-color:#52b788}
+.qblock.wrong{border-color:#e57373}
+.q-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.qnum{font-weight:bold;color:#2d6ab4;white-space:nowrap;font-size:.9em}
+.qtag{font-size:.75em;background:#e8edf8;color:#1a3a6b;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.qtext{font-size:.92em;margin-bottom:10px;line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:.86em}
+th{background:#2d6ab4;color:#fff;padding:6px 7px;text-align:center;white-space:nowrap}
+td{border:1px solid #ccd5e0;padding:3px 4px;text-align:center}
+select,input[type=number]{width:100%;padding:4px 5px;border:1px solid #b0bec5;border-radius:4px;font-size:.85em;font-family:inherit;background:#fff}
+input[type=number]{text-align:right}
+.ok-cell{background:#d4f0dc!important;border-color:#52b788!important}
+.ng-cell{background:#fde8e8!important;border-color:#e57373!important}
+.q-result{margin-top:8px;padding:7px 10px;border-radius:5px;font-size:.83em;display:none}
+.q-result.ok{background:#e6f4ea;border-left:3px solid #52b788;display:block}
+.q-result.ng{background:#fde8e8;border-left:3px solid #e57373;display:block}
+.submit-area{text-align:center;padding:22px 0}
+.btn-submit{background:#27ae60;color:#fff;border:none;padding:13px 46px;font-size:1.1em;border-radius:30px;cursor:pointer;box-shadow:0 4px 14px rgba(39,174,96,.4);transition:.2s}
+.btn-submit:hover{background:#1e8449;transform:translateY(-2px)}
+.btn-reset{background:#7f8c8d;color:#fff;border:none;padding:10px 26px;font-size:.95em;border-radius:20px;cursor:pointer;margin-left:12px}
+#score-panel{display:none;background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.score-top{background:linear-gradient(135deg,#1a3a6b,#2d6ab4);color:#fff;border-radius:10px;padding:22px;text-align:center;margin-bottom:16px}
+.big-score{font-size:3.5em;font-weight:bold}
+.pass-msg{margin-top:8px;font-size:1em;font-weight:bold}
+.score-breakdown{display:flex;flex-wrap:wrap;gap:10px}
+.topic-score{flex:1;min-width:180px;background:#f8fafd;border:1px solid #dce8f8;border-radius:8px;padding:10px 12px;font-size:.85em}
+.topic-score h4{color:#1a3a6b;margin-bottom:5px;font-size:.9em}
+.bar-w{background:#e0e0e0;border-radius:99px;height:8px;margin:3px 0}
+.bar{background:#27ae60;height:100%;border-radius:99px;transition:width .8s}
+.bar.mid{background:#f39c12}
+.bar.low{background:#e74c3c}
+@media(max-width:640px){
+  .q-top{flex-direction:column;gap:3px}
+  header h1{font-size:1.1em}
+  .toolbar{gap:6px}
+  .filter-btn{padding:8px 12px;font-size:.82em;min-height:38px}
+  .btn-submit,.btn-reset{min-height:48px;font-size:1em}
+  .progress{flex-wrap:wrap;gap:6px}
+
+  /* 仕訳テーブル：借方（左列）・貸方（右列）、科目と金額を縦並び */
+  .jtable{display:block}
+  .jtable thead{display:none}
+  .jtable tbody{display:block}
+  .jtable tbody tr{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto auto;
+    gap:5px;
+    padding:8px 0;
+    border-bottom:1px solid #dce8f8;
+  }
+  .jtable td{border:1px solid #ccd5e0;border-radius:5px;padding:5px}
+  .jtable td:nth-child(1){grid-column:1;grid-row:1}
+  .jtable td:nth-child(2){grid-column:1;grid-row:2}
+  .jtable td:nth-child(3){grid-column:2;grid-row:1}
+  .jtable td:nth-child(4){grid-column:2;grid-row:2}
+  .jtable td:nth-child(1)::before{content:'借方科目';display:block;font-size:.7em;font-weight:bold;color:#1a3a6b;margin-bottom:2px}
+  .jtable td:nth-child(2)::before{content:'借方金額';display:block;font-size:.7em;font-weight:bold;color:#1a3a6b;margin-bottom:2px}
+  .jtable td:nth-child(3)::before{content:'貸方科目';display:block;font-size:.7em;font-weight:bold;color:#27ae60;margin-bottom:2px}
+  .jtable td:nth-child(4)::before{content:'貸方金額';display:block;font-size:.7em;font-weight:bold;color:#27ae60;margin-bottom:2px}
+
+  /* iOSは16px未満でズームするので上書き */
+  select,input[type=number]{font-size:16px!important;min-height:40px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>簿記３級　仕訳問題 56問</h1>
+  <div class="sub">第１問対策 ／ 全範囲＋応用問題カバー ／ 各問1点・合計56点</div>
+</header>
+
+<div class="toolbar" id="filter-bar">
+  <span style="font-size:.85em;font-weight:bold;color:#555">表示：</span>
+</div>
+
+<div class="progress">
+  <span id="prog-text">0 / 50 問 回答済み</span>
+  <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+  <span id="prog-score" style="font-weight:bold;color:#27ae60">-</span>
+</div>
+
+<div id="qcontainer"></div>
+
+<div class="submit-area">
+  <button class="btn-submit" onclick="submitAll()">採　点　す　る</button>
+  <button class="btn-reset" onclick="resetAll()">リセット</button>
+</div>
+
+<div id="score-panel">
+  <div class="score-top">
+    <div style="font-size:.9em;opacity:.8">合計得点</div>
+    <div class="big-score" id="final-score">-</div>
+    <div class="pass-msg" id="pass-msg"></div>
+  </div>
+  <div class="score-breakdown" id="breakdown"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ===== 勘定科目リスト（optgroup付き） =====
+const ACC_GROUPS = [
+  {label:'--- 選択してください ---', opts:['']},
+  {label:'【資産】', opts:['現金','当座預金','普通預金','定期預金','小口現金',
+    '売掛金','受取手形','電子記録債権','クレジット売掛金','受取商品券','未収収益','未収入金','立替金',
+    '繰越商品','貯蔵品','消耗品','前払費用','差入保証金',
+    '仮払金','仮払法人税等','仮払消費税','貸付金',
+    '備品','建物','土地','車両運搬具']},
+  {label:'【資産の評価勘定】', opts:['貸倒引当金','備品減価償却累計額','建物減価償却累計額']},
+  {label:'【負債】', opts:['買掛金','支払手形','電子記録債務','当座借越','借入金','未払費用','未払金','未払消費税','前受収益',
+    '社会保険料預り金','所得税預り金','仮受金','仮受消費税','未払法人税等']},
+  {label:'【純資産】', opts:['資本金']},
+  {label:'【収益】', opts:['売上','受取利息','受取家賃','固定資産売却益','償却債権取立益']},
+  {label:'【費用】', opts:['仕入','給料','支払家賃','水道光熱費','通信費',
+    '旅費交通費','消耗品費','支払利息','支払手数料','貸倒損失','貸倒引当金繰入',
+    '減価償却費','租税公課','法定福利費','修繕費','固定資産売却損','固定資産除却損','法人税等']},
+  {label:'【その他】', opts:['現金過不足']},
+];
+
+function makeSelectHTML(id){
+  let html=`<select id="${id}">`;
+  ACC_GROUPS.forEach(g=>{
+    if(g.label.startsWith('---')){ html+=`<option value="">-- 選択 --</option>`; }
+    else{
+      html+=`<optgroup label="${g.label}">`;
+      g.opts.forEach(a=>{ html+=`<option value="${a}">${a}</option>`; });
+      html+=`</optgroup>`;
+    }
+  });
+  return html+'</select>';
+}
+
+// ===== 問題データ =====
+const TOPICS = {
+  A:'現金・預金',
+  B:'手形',
+  C:'商品売買',
+  D:'売掛金・買掛金',
+  E:'貸倒れ・引当金',
+  F:'固定資産',
+  G:'貸付金・借入金',
+  H:'給料・社会保険',
+  I:'仮払金・仮受金',
+  J:'経過勘定',
+  K:'諸費用',
+  L:'資本・税金',
+  M:'★応用・複合',
+};
+
+// d: 借方エントリー配列 [{a:勘定科目, v:金額}]
+// c: 貸方エントリー配列
+// rows: テーブル行数
+const QUESTIONS = [
+  // ===== A: 現金・預金 =====
+  {id:1, topic:'A', rows:1,
+   text:'現金の実際有高を確認したところ、帳簿残高より ¥2,000 少なかった。原因は不明である。',
+   d:[{a:'現金過不足',v:2000}], c:[{a:'現金',v:2000}]},
+
+  {id:2, topic:'A', rows:1,
+   text:'現金の実際有高を確認したところ、帳簿残高より ¥3,500 多かった。原因は不明である。',
+   d:[{a:'現金',v:3500}], c:[{a:'現金過不足',v:3500}]},
+
+  {id:3, topic:'A', rows:1,
+   text:'現金過不足（貸方残 ¥3,500）の原因を調べたところ、受取利息 ¥3,500 の記帳漏れと判明した。',
+   d:[{a:'現金過不足',v:3500}], c:[{a:'受取利息',v:3500}]},
+
+  {id:4, topic:'A', rows:1,
+   text:'現金過不足（借方残 ¥2,000）の原因を調べたところ、水道光熱費 ¥2,000 の記帳漏れと判明した。',
+   d:[{a:'水道光熱費',v:2000}], c:[{a:'現金過不足',v:2000}]},
+
+  // ===== B: 手形 =====
+  {id:8, topic:'B', rows:1,
+   text:'商品 ¥100,000 を売り上げ、代金として得意先振出の約束手形を受け取った。',
+   d:[{a:'受取手形',v:100000}], c:[{a:'売上',v:100000}]},
+
+  {id:9, topic:'B', rows:1,
+   text:'商品 ¥120,000 を仕入れ、代金として約束手形を振り出した。',
+   d:[{a:'仕入',v:120000}], c:[{a:'支払手形',v:120000}]},
+
+  {id:10, topic:'B', rows:1,
+   text:'受取手形 ¥100,000 の期日が到来し、当座預金に入金された。',
+   d:[{a:'当座預金',v:100000}], c:[{a:'受取手形',v:100000}]},
+
+  {id:11, topic:'B', rows:1,
+   text:'支払手形 ¥120,000 の期日が到来し、当座預金から引き落とされた。',
+   d:[{a:'支払手形',v:120000}], c:[{a:'当座預金',v:120000}]},
+
+  {id:12, topic:'B', rows:1,
+   text:'商品 ¥80,000 を売り上げ、代金として他人振出の小切手を受け取った。',
+   d:[{a:'現金',v:80000}], c:[{a:'売上',v:80000}]},
+
+  {id:13, topic:'B', rows:1,
+   text:'仕入先への買掛金 ¥90,000 を支払うため、約束手形を振り出した。',
+   d:[{a:'買掛金',v:90000}], c:[{a:'支払手形',v:90000}]},
+
+  // ===== C: 商品売買 =====
+  {id:14, topic:'C', rows:1,
+   text:'商品 ¥180,000 を掛けで仕入れた。',
+   d:[{a:'仕入',v:180000}], c:[{a:'買掛金',v:180000}]},
+
+  {id:15, topic:'C', rows:1,
+   text:'商品 ¥250,000 を掛けで売り上げた。',
+   d:[{a:'売掛金',v:250000}], c:[{a:'売上',v:250000}]},
+
+  {id:16, topic:'C', rows:2,
+   text:'商品 ¥150,000 を仕入れ、代金のうち ¥50,000 は現金で支払い、残額は掛けとした。',
+   d:[{a:'仕入',v:150000}], c:[{a:'現金',v:50000},{a:'買掛金',v:100000}]},
+
+  {id:17, topic:'C', rows:1,
+   text:'先日、掛けで仕入れた商品のうち ¥20,000 分を品違いのため返品した。',
+   d:[{a:'買掛金',v:20000}], c:[{a:'仕入',v:20000}]},
+
+  {id:18, topic:'C', rows:1,
+   text:'先日、掛けで売り上げた商品のうち ¥15,000 分が品違いのため返品された。',
+   d:[{a:'売上',v:15000}], c:[{a:'売掛金',v:15000}]},
+
+  {id:19, topic:'C', rows:2,
+   text:'商品 ¥60,000 をクレジットカード払いで売り上げた。なお、信販会社への手数料は販売代金の２％とする。',
+   d:[{a:'クレジット売掛金',v:58800},{a:'支払手数料',v:1200}], c:[{a:'売上',v:60000}]},
+
+  {id:20, topic:'C', rows:1,
+   text:'商品 ¥30,000 を売り上げ、代金として商品券 ¥30,000 を受け取った。',
+   d:[{a:'受取商品券',v:30000}], c:[{a:'売上',v:30000}]},
+
+  // ===== D: 売掛金・買掛金 =====
+  {id:22, topic:'D', rows:1,
+   text:'売掛金 ¥250,000 が当座預金に振り込まれた。',
+   d:[{a:'当座預金',v:250000}], c:[{a:'売掛金',v:250000}]},
+
+  {id:23, topic:'D', rows:1,
+   text:'買掛金 ¥180,000 を小切手を振り出して支払った。',
+   d:[{a:'買掛金',v:180000}], c:[{a:'当座預金',v:180000}]},
+
+  // ===== E: 貸倒れ・引当金 =====
+  {id:26, topic:'E', rows:1,
+   text:'決算にあたり、売掛金残高 ¥400,000 の２％を貸倒引当金として設定する（差額補充法）。なお、貸倒引当金の現在残高は ¥3,000 である。',
+   d:[{a:'貸倒引当金繰入',v:5000}], c:[{a:'貸倒引当金',v:5000}]},
+
+  {id:28, topic:'E', rows:1,
+   text:'得意先が倒産し、売掛金 ¥50,000 が回収不能となった。貸倒引当金の残高は ¥70,000 ある。',
+   d:[{a:'貸倒引当金',v:50000}], c:[{a:'売掛金',v:50000}]},
+
+  {id:29, topic:'E', rows:2,
+   text:'得意先が倒産し、売掛金 ¥80,000 が回収不能となった。貸倒引当金の残高は ¥30,000 しかない。',
+   d:[{a:'貸倒引当金',v:30000},{a:'貸倒損失',v:50000}], c:[{a:'売掛金',v:80000}]},
+
+  {id:30, topic:'E', rows:1,
+   text:'前期に貸倒れとして処理した売掛金 ¥40,000 を本日現金で回収した。',
+   d:[{a:'現金',v:40000}], c:[{a:'償却債権取立益',v:40000}]},
+
+  // ===== F: 固定資産 =====
+  {id:31, topic:'F', rows:1,
+   text:'事務用パソコン ¥200,000 を購入し、代金は小切手を振り出して支払った。',
+   d:[{a:'備品',v:200000}], c:[{a:'当座預金',v:200000}]},
+
+  {id:32, topic:'F', rows:1,
+   text:'机・椅子 ¥80,000 を購入し、代金は現金で支払った。',
+   d:[{a:'備品',v:80000}], c:[{a:'現金',v:80000}]},
+
+  {id:34, topic:'F', rows:1,
+   text:'決算にあたり、備品（取得原価 ¥300,000）の減価償却を行う。耐用年数５年・残存価額ゼロ・定額法。',
+   d:[{a:'減価償却費',v:60000}], c:[{a:'備品減価償却累計額',v:60000}]},
+
+  {id:35, topic:'F', rows:2,
+   text:'備品（取得原価 ¥200,000・減価償却累計額 ¥140,000）を ¥80,000 で売却し、代金は現金で受け取った。',
+   d:[{a:'現金',v:80000},{a:'備品減価償却累計額',v:140000}], c:[{a:'備品',v:200000},{a:'固定資産売却益',v:20000}]},
+
+  {id:36, topic:'F', rows:2,
+   text:'備品（取得原価 ¥300,000・減価償却累計額 ¥200,000）を ¥80,000 で売却し、代金は現金で受け取った。',
+   d:[{a:'現金',v:80000},{a:'備品減価償却累計額',v:200000},{a:'固定資産売却損',v:20000}], c:[{a:'備品',v:300000}]},
+
+  // ===== G: 貸付金・借入金 =====
+  {id:37, topic:'G', rows:1,
+   text:'得意先に現金 ¥500,000 を貸し付けた。',
+   d:[{a:'貸付金',v:500000}], c:[{a:'現金',v:500000}]},
+
+  {id:38, topic:'G', rows:2,
+   text:'貸付金 ¥500,000 が返済期日を迎え、利息 ¥10,000 とともに現金で受け取った。',
+   d:[{a:'現金',v:510000}], c:[{a:'貸付金',v:500000},{a:'受取利息',v:10000}]},
+
+  {id:39, topic:'G', rows:1,
+   text:'銀行から ¥1,000,000 を借り入れ、普通預金口座に入金された。',
+   d:[{a:'普通預金',v:1000000}], c:[{a:'借入金',v:1000000}]},
+
+  {id:40, topic:'G', rows:2,
+   text:'借入金 ¥1,000,000 の返済期日が到来し、利息 ¥15,000 とともに普通預金から支払った。',
+   d:[{a:'借入金',v:1000000},{a:'支払利息',v:15000}], c:[{a:'普通預金',v:1015000}]},
+
+  // ===== H: 給料・社会保険 =====
+  {id:41, topic:'H', rows:1,
+   text:'従業員の給料 ¥300,000 を現金で支払った。',
+   d:[{a:'給料',v:300000}], c:[{a:'現金',v:300000}]},
+
+  {id:42, topic:'H', rows:3,
+   text:'給料 ¥400,000 の支払いにあたり、社会保険料（従業員負担分）¥30,000 と源泉所得税 ¥20,000 を控除し、残額 ¥350,000 を普通預金から振り込んだ。',
+   d:[{a:'給料',v:400000}], c:[{a:'普通預金',v:350000},{a:'社会保険料預り金',v:30000},{a:'所得税預り金',v:20000}]},
+
+  {id:43, topic:'H', rows:2,
+   text:'社会保険料について、従業員負担分 ¥30,000（預り金）と会社負担分 ¥30,000 を合わせて現金で納付した。',
+   d:[{a:'社会保険料預り金',v:30000},{a:'法定福利費',v:30000}], c:[{a:'現金',v:60000}]},
+
+  // ===== I: 仮払金・仮受金 =====
+  {id:44, topic:'I', rows:1,
+   text:'従業員に出張旅費の概算額 ¥50,000 を現金で渡した。',
+   d:[{a:'仮払金',v:50000}], c:[{a:'現金',v:50000}]},
+
+  {id:45, topic:'I', rows:2,
+   text:'出張から戻った従業員より旅費精算を受け、実際旅費は ¥45,000 であることが判明した。差額 ¥5,000 は現金で返金を受けた。',
+   d:[{a:'旅費交通費',v:45000},{a:'現金',v:5000}], c:[{a:'仮払金',v:50000}]},
+
+  {id:46, topic:'I', rows:1,
+   text:'内容不明の入金 ¥50,000 が当座預金に振り込まれていた。',
+   d:[{a:'当座預金',v:50000}], c:[{a:'仮受金',v:50000}]},
+
+  {id:47, topic:'I', rows:1,
+   text:'仮受金 ¥50,000 の内容が判明し、得意先からの売掛金回収であることが分かった。',
+   d:[{a:'仮受金',v:50000}], c:[{a:'売掛金',v:50000}]},
+
+  // ===== J: 経過勘定 =====
+  {id:48, topic:'J', rows:1,
+   text:'決算にあたり、支払家賃 ¥72,000 のうち ¥6,000 が翌期分と判明した。（前払費用への振替）',
+   d:[{a:'前払費用',v:6000}], c:[{a:'支払家賃',v:6000}]},
+
+  {id:49, topic:'J', rows:1,
+   text:'決算にあたり、給料の未払分 ¥50,000 を計上した。',
+   d:[{a:'給料',v:50000}], c:[{a:'未払費用',v:50000}]},
+
+  {id:50, topic:'J', rows:1,
+   text:'決算にあたり、受取家賃 ¥24,000 のうち ¥8,000 が翌期分と判明した。（前受収益への振替）',
+   d:[{a:'受取家賃',v:8000}], c:[{a:'前受収益',v:8000}]},
+
+  // ===== K: 諸費用 =====
+  {id:51, topic:'K', rows:1,
+   text:'決算にあたり、貸付金の利息 ¥3,000 が当期分として未収であることが判明した。',
+   d:[{a:'未収収益',v:3000}], c:[{a:'受取利息',v:3000}]},
+
+  {id:52, topic:'K', rows:1,
+   text:'電話料金 ¥8,000 が当座預金から引き落とされた。',
+   d:[{a:'通信費',v:8000}], c:[{a:'当座預金',v:8000}]},
+
+  {id:54, topic:'K', rows:1,
+   text:'消耗品 ¥12,000 を現金で購入した。費用として処理する。',
+   d:[{a:'消耗品費',v:12000}], c:[{a:'現金',v:12000}]},
+
+  // ===== L: 資本・税金 =====
+  {id:55, topic:'L', rows:1,
+   text:'会社設立にあたり、株主から現金 ¥3,000,000 の払込みを受けた。',
+   d:[{a:'現金',v:3000000}], c:[{a:'資本金',v:3000000}]},
+
+  {id:56, topic:'L', rows:1,
+   text:'法人税等の中間申告を行い、¥150,000 を現金で納付した。',
+   d:[{a:'仮払法人税等',v:150000}], c:[{a:'現金',v:150000}]},
+
+  {id:57, topic:'L', rows:2,
+   text:'決算にあたり、法人税等 ¥300,000 を計上した。なお、中間納付額 ¥150,000 は仮払法人税等として処理済みである。',
+   d:[{a:'法人税等',v:300000}], c:[{a:'仮払法人税等',v:150000},{a:'未払法人税等',v:150000}]},
+
+  // ===== M: 応用・複合 =====
+  {id:58, topic:'M', rows:2,
+   text:'商品 ¥330,000（税込・消費税率10%）を掛けで仕入れた。消費税は税抜処理をする。',
+   d:[{a:'仕入',v:300000},{a:'仮払消費税',v:30000}], c:[{a:'買掛金',v:330000}]},
+
+  {id:59, topic:'M', rows:2,
+   text:'商品 ¥220,000（税込・消費税率10%）を掛けで売り上げた。消費税は税抜処理をする。',
+   d:[{a:'売掛金',v:220000}], c:[{a:'売上',v:200000},{a:'仮受消費税',v:20000}]},
+
+  {id:60, topic:'M', rows:2,
+   text:'決算にあたり、仮受消費税 ¥80,000 と仮払消費税 ¥50,000 を相殺し、差額を未払消費税として計上した。',
+   d:[{a:'仮受消費税',v:80000}], c:[{a:'仮払消費税',v:50000},{a:'未払消費税',v:30000}]},
+
+  {id:61, topic:'M', rows:1,
+   text:'売掛金 ¥200,000 について、取引先から電子記録債権の発生記録の通知を受けた。',
+   d:[{a:'電子記録債権',v:200000}], c:[{a:'売掛金',v:200000}]},
+
+  {id:62, topic:'M', rows:1,
+   text:'買掛金 ¥150,000 について、電子記録債務の発生記録を行った。',
+   d:[{a:'買掛金',v:150000}], c:[{a:'電子記録債務',v:150000}]},
+
+  {id:63, topic:'M', rows:2,
+   text:'事務所を賃借するにあたり、敷金 ¥240,000 と当月分の家賃 ¥60,000 を現金で支払った。',
+   d:[{a:'差入保証金',v:240000},{a:'支払家賃',v:60000}], c:[{a:'現金',v:300000}]},
+
+  {id:64, topic:'M', rows:2,
+   text:'不要となった備品（取得原価 ¥200,000・減価償却累計額 ¥160,000）を除却した。',
+   d:[{a:'備品減価償却累計額',v:160000},{a:'固定資産除却損',v:40000}], c:[{a:'備品',v:200000}]},
+
+  {id:65, topic:'M', rows:1,
+   text:'決算にあたり、当座預金勘定が ¥30,000 の貸方残高となっていたため、当座借越勘定に振り替えた。',
+   d:[{a:'当座預金',v:30000}], c:[{a:'当座借越',v:30000}]},
+];
+
+// ===== HTML生成 =====
+const container = document.getElementById('qcontainer');
+const filterBar  = document.getElementById('filter-bar');
+
+// フィルターボタン生成
+const allTopics = [...new Set(QUESTIONS.map(q=>q.topic))];
+const filterState = {}; // topic→true=show
+allTopics.forEach(t=>filterState[t]=true);
+
+function renderFilterBtns(){
+  // 「全て」ボタン
+  let html = `<button class="filter-btn active" id="fb-all" onclick="filterAll()">すべて</button>`;
+  allTopics.forEach(t=>{
+    html += `<button class="filter-btn active" id="fb-${t}" onclick="filterToggle('${t}')">${TOPICS[t]}</button>`;
+  });
+  filterBar.innerHTML = filterBar.innerHTML.replace(/<button.*$/s,'') + html;
+}
+
+function filterToggle(t){
+  filterState[t] = !filterState[t];
+  document.getElementById('fb-'+t).classList.toggle('active', filterState[t]);
+  renderQuestions();
+  updateProgress();
+}
+function filterAll(){
+  const allOn = allTopics.every(t=>filterState[t]);
+  allTopics.forEach(t=>{ filterState[t]=!allOn; document.getElementById('fb-'+t).classList.toggle('active',!allOn); });
+  document.getElementById('fb-all').classList.toggle('active',!allOn);
+  renderQuestions();
+  updateProgress();
+}
+
+function renderQuestions(){
+  container.innerHTML='';
+  let prevTopic='';
+  let displayNum=0;
+  QUESTIONS.forEach(q=>{
+    if(!filterState[q.topic]) return;
+    displayNum++;
+    if(q.topic!==prevTopic){
+      const div=document.createElement('div');
+      div.className='topic-header';
+      div.textContent=`▪ ${TOPICS[q.topic]}`;
+      container.appendChild(div);
+      prevTopic=q.topic;
+    }
+    const div=document.createElement('div');
+    div.className='qblock';
+    div.id=`qb-${q.id}`;
+
+    let tableRows='';
+    for(let r=1;r<=Math.max(q.rows, q.d.length, q.c.length, 1);r++){
+      tableRows+=`<tr>
+        <td style="min-width:140px">${makeSelectHTML(`q${q.id}_d${r}a`)}</td>
+        <td style="min-width:105px"><input type="number" id="q${q.id}_d${r}v" min="0" placeholder="0"></td>
+        <td style="min-width:140px">${makeSelectHTML(`q${q.id}_c${r}a`)}</td>
+        <td style="min-width:105px"><input type="number" id="q${q.id}_c${r}v" min="0" placeholder="0"></td>
+      </tr>`;
+    }
+    div.innerHTML=`
+      <div class="q-top">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="qnum">問${displayNum}（No.${q.id}）</span>
+          <span class="qtag">${TOPICS[q.topic]}</span>
+        </div>
+      </div>
+      <div class="qtext">${q.text}</div>
+      <table class="jtable">
+        <thead><tr><th>借方科目</th><th>借方金額</th><th>貸方科目</th><th>貸方金額</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="q-result" id="qr-${q.id}"></div>`;
+    container.appendChild(div);
+
+    // 入力変化で進捗更新
+    div.querySelectorAll('select,input').forEach(el=>{
+      el.addEventListener('change', updateProgress);
+    });
+  });
+}
+
+// ===== 採点ロジック =====
+function norm(entries){
+  return entries.filter(e=>e.a&&e.v).map(e=>e.a+'|'+e.v).sort().join('##');
+}
+function readEntries(qid, maxRows){
+  const d=[], c=[];
+  for(let r=1;r<=maxRows;r++){
+    const da=document.getElementById(`q${qid}_d${r}a`);
+    const dv=document.getElementById(`q${qid}_d${r}v`);
+    const ca=document.getElementById(`q${qid}_c${r}a`);
+    const cv=document.getElementById(`q${qid}_c${r}v`);
+    if(da&&dv){ const a=da.value, v=parseInt(dv.value)||0; if(a&&v) d.push({a,v}); }
+    if(ca&&cv){ const a=ca.value, v=parseInt(cv.value)||0; if(a&&v) c.push({a,v}); }
+  }
+  return {d,c};
+}
+function markCells(qid, maxRows, dOk, cOk){
+  for(let r=1;r<=maxRows;r++){
+    ['d','c'].forEach(side=>{
+      const ok = side==='d'?dOk:cOk;
+      [`q${qid}_${side}${r}a`,`q${qid}_${side}${r}v`].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){ el.classList.remove('ok-cell','ng-cell'); el.classList.add(ok?'ok-cell':'ng-cell'); }
+      });
+    });
+  }
+}
+function fmtEntry(entries){ return entries.map(e=>`${e.a} ¥${e.v.toLocaleString()}`).join('、'); }
+
+function submitAll(){
+  let total=0;
+  const topicStats={};
+  allTopics.forEach(t=>topicStats[t]={ok:0,total:0});
+
+  QUESTIONS.forEach(q=>{
+    if(!filterState[q.topic]) return;
+    topicStats[q.topic].total++;
+    const maxRows = Math.max(q.rows, q.d.length, q.c.length, 1);
+    const user = readEntries(q.id, maxRows);
+    const dOk = norm(user.d)===norm(q.d);
+    const cOk = norm(user.c)===norm(q.c);
+    const ok = dOk&&cOk;
+    if(ok){ total++; topicStats[q.topic].ok++; }
+    markCells(q.id, maxRows, dOk, cOk);
+
+    const qblock = document.getElementById(`qb-${q.id}`);
+    if(qblock){ qblock.className='qblock '+(ok?'answered':'wrong'); }
+
+    const resEl = document.getElementById(`qr-${q.id}`);
+    if(resEl){
+      const ansText = `【正解】借方：${fmtEntry(q.d)}　／　貸方：${fmtEntry(q.c)}`;
+      resEl.className = 'q-result '+(ok?'ok':'ng');
+      resEl.innerHTML = ok ? `✓ 正解！` : `✗ 不正解　${ansText}`;
+    }
+  });
+
+  const displayedTotal = QUESTIONS.filter(q=>filterState[q.topic]).length;
+  const pct = Math.round(total/displayedTotal*100);
+
+  document.getElementById('final-score').textContent = `${total} / ${displayedTotal}点`;
+  const pm = document.getElementById('pass-msg');
+  if(pct>=70){ pm.textContent='✓ 合格ライン（70%以上）達成！'; pm.style.color='#5efb78'; }
+  else{ pm.textContent=`✗ あと ${Math.ceil(displayedTotal*0.7)-total} 問正解で合格ライン`; pm.style.color='#ff8a80'; }
+
+  // 分野別スコア
+  let bdHTML='';
+  allTopics.forEach(t=>{
+    if(!filterState[t]||topicStats[t].total===0) return;
+    const {ok,total:tot}=topicStats[t];
+    const p=Math.round(ok/tot*100);
+    const cls=p>=70?'':'mid';
+    bdHTML+=`<div class="topic-score">
+      <h4>${TOPICS[t]}</h4>
+      <div>${ok} / ${tot} 問正解（${p}%）</div>
+      <div class="bar-w"><div class="bar ${cls}" style="width:${p}%"></div></div>
+    </div>`;
+  });
+  document.getElementById('breakdown').innerHTML=bdHTML;
+  document.getElementById('score-panel').style.display='block';
+  document.getElementById('score-panel').scrollIntoView({behavior:'smooth'});
+}
+
+function updateProgress(){
+  const total = QUESTIONS.filter(q=>filterState[q.topic]).length;
+  let answered=0;
+  QUESTIONS.forEach(q=>{
+    if(!filterState[q.topic]) return;
+    const maxRows = Math.max(q.rows, q.d.length, q.c.length, 1);
+    for(let r=1;r<=maxRows;r++){
+      const da=document.getElementById(`q${q.id}_d${r}a`);
+      const dv=document.getElementById(`q${q.id}_d${r}v`);
+      if(da&&dv&&da.value&&(parseInt(dv.value)||0)>0){ answered++; break; }
+    }
+  });
+  const pct=total>0?Math.round(answered/total*100):0;
+  document.getElementById('prog-text').textContent=`${answered} / ${total} 問 回答済み`;
+  document.getElementById('prog-bar').style.width=pct+'%';
+  document.getElementById('prog-score').textContent=pct+'%';
+}
+
+function resetAll(){
+  if(!confirm('すべての回答をリセットしますか？')) return;
+  document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
+  document.querySelectorAll('input[type=number]').forEach(i=>i.value='');
+  document.querySelectorAll('.ok-cell,.ng-cell').forEach(el=>el.classList.remove('ok-cell','ng-cell'));
+  document.querySelectorAll('.qblock').forEach(el=>el.className='qblock');
+  document.querySelectorAll('.q-result').forEach(el=>{ el.className='q-result'; el.innerHTML=''; });
+  document.getElementById('score-panel').style.display='none';
+  updateProgress();
+}
+
+// 初期描画
+renderFilterBtns();
+renderQuestions();
+updateProgress();
+</script>
+</body>
+</html>
