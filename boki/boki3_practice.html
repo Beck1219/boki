@@ -39,6 +39,12 @@ input[type=number]{text-align:right}
 .btn-submit{background:#27ae60;color:#fff;border:none;padding:13px 46px;font-size:1.1em;border-radius:30px;cursor:pointer;box-shadow:0 4px 14px rgba(39,174,96,.4);transition:.2s}
 .btn-submit:hover{background:#1e8449;transform:translateY(-2px)}
 .btn-reset{background:#7f8c8d;color:#fff;border:none;padding:10px 26px;font-size:.95em;border-radius:20px;cursor:pointer;margin-left:12px}
+.btn-hist-reset{background:#fff;color:#e74c3c;border:2px solid #e74c3c;padding:8px 16px;font-size:.85em;border-radius:20px;cursor:pointer;margin-left:10px}
+.mistake-btn{border-color:#e74c3c!important;color:#e74c3c!important}
+.mistake-btn.mistake-active{background:#e74c3c!important;color:#fff!important}
+.hist-badge{font-size:.75em;padding:2px 8px;border-radius:10px;white-space:nowrap;font-weight:bold}
+.ok-badge{background:#d4f0dc;color:#1b5e20}
+.ng-badge{background:#fde8e8;color:#b71c1c}
 #score-panel{display:none;background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
 .score-top{background:linear-gradient(135deg,#1a3a6b,#2d6ab4);color:#fff;border-radius:10px;padding:22px;text-align:center;margin-bottom:16px}
 .big-score{font-size:3.5em;font-weight:bold}
@@ -107,7 +113,8 @@ input[type=number]{text-align:right}
 
 <div class="submit-area">
   <button class="btn-submit" onclick="submitAll()">採　点　す　る</button>
-  <button class="btn-reset" onclick="resetAll()">リセット</button>
+  <button class="btn-reset" onclick="resetAll()">回答リセット</button>
+  <button class="btn-hist-reset" onclick="clearHistory()">履歴リセット</button>
 </div>
 
 <div id="score-panel">
@@ -413,46 +420,106 @@ const QUESTIONS = [
    d:[{a:'当座預金',v:30000}], c:[{a:'当座借越',v:30000}]},
 ];
 
+// ===== 履歴管理 (localStorage) =====
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem('boki_history')||'{}'); }catch{ return {}; }
+}
+function saveHistory(h){ localStorage.setItem('boki_history',JSON.stringify(h)); }
+function updateHistoryEntry(qid,isOk){
+  const h=loadHistory();
+  if(!h[qid]) h[qid]={attempts:0,wrong:0};
+  h[qid].attempts++;
+  if(!isOk) h[qid].wrong++;
+  saveHistory(h);
+}
+function getWrongIds(){
+  const h=loadHistory();
+  return Object.keys(h).filter(k=>h[k].wrong>0).map(Number);
+}
+function clearHistory(){
+  if(!confirm('間違い履歴をすべてリセットしますか？')) return;
+  localStorage.removeItem('boki_history');
+  mistakesOnly=false;
+  renderFilterBtns();
+  renderQuestions();
+  updateProgress();
+}
+
 // ===== HTML生成 =====
 const container = document.getElementById('qcontainer');
 const filterBar  = document.getElementById('filter-bar');
 
-// フィルターボタン生成
 const allTopics = [...new Set(QUESTIONS.map(q=>q.topic))];
-const filterState = {}; // topic→true=show
+const filterState = {};
 allTopics.forEach(t=>filterState[t]=true);
+let mistakesOnly = false;
 
 function renderFilterBtns(){
-  // 「全て」ボタン
+  const wrongCount = getWrongIds().length;
   let html = `<button class="filter-btn active" id="fb-all" onclick="filterAll()">すべて</button>`;
   allTopics.forEach(t=>{
     html += `<button class="filter-btn active" id="fb-${t}" onclick="filterToggle('${t}')">${TOPICS[t]}</button>`;
   });
+  html += `<button class="filter-btn mistake-btn${mistakesOnly?' mistake-active':''}" id="fb-mistakes" onclick="filterMistakes()">❌ 間違えた問題${wrongCount>0?' ('+wrongCount+')':''}</button>`;
   filterBar.innerHTML = filterBar.innerHTML.replace(/<button.*$/s,'') + html;
 }
 
 function filterToggle(t){
-  filterState[t] = !filterState[t];
-  document.getElementById('fb-'+t).classList.toggle('active', filterState[t]);
+  if(mistakesOnly){ mistakesOnly=false; }
+  filterState[t]=!filterState[t];
+  renderFilterBtns();
   renderQuestions();
   updateProgress();
 }
 function filterAll(){
-  const allOn = allTopics.every(t=>filterState[t]);
-  allTopics.forEach(t=>{ filterState[t]=!allOn; document.getElementById('fb-'+t).classList.toggle('active',!allOn); });
-  document.getElementById('fb-all').classList.toggle('active',!allOn);
+  if(mistakesOnly){
+    mistakesOnly=false;
+    allTopics.forEach(t=>filterState[t]=true);
+  } else {
+    const allOn=allTopics.every(t=>filterState[t]);
+    allTopics.forEach(t=>filterState[t]=!allOn);
+  }
+  renderFilterBtns();
+  renderQuestions();
+  updateProgress();
+}
+function filterMistakes(){
+  mistakesOnly=!mistakesOnly;
+  renderFilterBtns();
   renderQuestions();
   updateProgress();
 }
 
+function getVisibleQuestions(){
+  if(mistakesOnly){
+    const wrongIds=getWrongIds();
+    return QUESTIONS.filter(q=>wrongIds.includes(q.id));
+  }
+  return QUESTIONS.filter(q=>filterState[q.topic]);
+}
+
+function badgeHTML(qid){
+  const h=loadHistory();
+  const hist=h[qid];
+  if(!hist||hist.attempts===0) return '';
+  if(hist.wrong===0) return `<span class="hist-badge ok-badge">✓ 全正解</span>`;
+  return `<span class="hist-badge ng-badge">✗ ${hist.wrong}/${hist.attempts}回ミス</span>`;
+}
+
 function renderQuestions(){
   container.innerHTML='';
+  const visible=getVisibleQuestions();
+
+  if(mistakesOnly && visible.length===0){
+    container.innerHTML='<div style="text-align:center;padding:48px 16px;color:#888;font-size:.95em">まだ間違えた問題の記録がありません。<br>採点すると自動的に記録されます。</div>';
+    return;
+  }
+
   let prevTopic='';
   let displayNum=0;
-  QUESTIONS.forEach(q=>{
-    if(!filterState[q.topic]) return;
+  visible.forEach(q=>{
     displayNum++;
-    if(q.topic!==prevTopic){
+    if(!mistakesOnly && q.topic!==prevTopic){
       const div=document.createElement('div');
       div.className='topic-header';
       div.textContent=`▪ ${TOPICS[q.topic]}`;
@@ -464,7 +531,7 @@ function renderQuestions(){
     div.id=`qb-${q.id}`;
 
     let tableRows='';
-    for(let r=1;r<=Math.max(q.rows, q.d.length, q.c.length, 1);r++){
+    for(let r=1;r<=Math.max(q.rows,q.d.length,q.c.length,1);r++){
       tableRows+=`<tr>
         <td style="min-width:140px">${makeSelectHTML(`q${q.id}_d${r}a`)}</td>
         <td style="min-width:105px"><input type="number" id="q${q.id}_d${r}v" min="0" placeholder="0"></td>
@@ -474,9 +541,10 @@ function renderQuestions(){
     }
     div.innerHTML=`
       <div class="q-top">
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span class="qnum">問${displayNum}（No.${q.id}）</span>
           <span class="qtag">${TOPICS[q.topic]}</span>
+          ${badgeHTML(q.id)}
         </div>
       </div>
       <div class="qtext">${q.text}</div>
@@ -486,11 +554,7 @@ function renderQuestions(){
       </table>
       <div class="q-result" id="qr-${q.id}"></div>`;
     container.appendChild(div);
-
-    // 入力変化で進捗更新
-    div.querySelectorAll('select,input').forEach(el=>{
-      el.addEventListener('change', updateProgress);
-    });
+    div.querySelectorAll('select,input').forEach(el=>el.addEventListener('change',updateProgress));
   });
 }
 
@@ -498,78 +562,85 @@ function renderQuestions(){
 function norm(entries){
   return entries.filter(e=>e.a&&e.v).map(e=>e.a+'|'+e.v).sort().join('##');
 }
-function readEntries(qid, maxRows){
-  const d=[], c=[];
+function readEntries(qid,maxRows){
+  const d=[],c=[];
   for(let r=1;r<=maxRows;r++){
-    const da=document.getElementById(`q${qid}_d${r}a`);
-    const dv=document.getElementById(`q${qid}_d${r}v`);
-    const ca=document.getElementById(`q${qid}_c${r}a`);
-    const cv=document.getElementById(`q${qid}_c${r}v`);
-    if(da&&dv){ const a=da.value, v=parseInt(dv.value)||0; if(a&&v) d.push({a,v}); }
-    if(ca&&cv){ const a=ca.value, v=parseInt(cv.value)||0; if(a&&v) c.push({a,v}); }
+    const da=document.getElementById(`q${qid}_d${r}a`),dv=document.getElementById(`q${qid}_d${r}v`);
+    const ca=document.getElementById(`q${qid}_c${r}a`),cv=document.getElementById(`q${qid}_c${r}v`);
+    if(da&&dv){const a=da.value,v=parseInt(dv.value)||0;if(a&&v)d.push({a,v});}
+    if(ca&&cv){const a=ca.value,v=parseInt(cv.value)||0;if(a&&v)c.push({a,v});}
   }
-  return {d,c};
+  return{d,c};
 }
-function markCells(qid, maxRows, dOk, cOk){
+function markCells(qid,maxRows,dOk,cOk){
   for(let r=1;r<=maxRows;r++){
     ['d','c'].forEach(side=>{
-      const ok = side==='d'?dOk:cOk;
+      const ok=side==='d'?dOk:cOk;
       [`q${qid}_${side}${r}a`,`q${qid}_${side}${r}v`].forEach(id=>{
         const el=document.getElementById(id);
-        if(el){ el.classList.remove('ok-cell','ng-cell'); el.classList.add(ok?'ok-cell':'ng-cell'); }
+        if(el){el.classList.remove('ok-cell','ng-cell');el.classList.add(ok?'ok-cell':'ng-cell');}
       });
     });
   }
 }
-function fmtEntry(entries){ return entries.map(e=>`${e.a} ¥${e.v.toLocaleString()}`).join('、'); }
+function fmtEntry(entries){return entries.map(e=>`${e.a} ¥${e.v.toLocaleString()}`).join('、');}
 
 function submitAll(){
   let total=0;
   const topicStats={};
   allTopics.forEach(t=>topicStats[t]={ok:0,total:0});
+  const visible=getVisibleQuestions();
 
-  QUESTIONS.forEach(q=>{
-    if(!filterState[q.topic]) return;
-    topicStats[q.topic].total++;
-    const maxRows = Math.max(q.rows, q.d.length, q.c.length, 1);
-    const user = readEntries(q.id, maxRows);
-    const dOk = norm(user.d)===norm(q.d);
-    const cOk = norm(user.c)===norm(q.c);
-    const ok = dOk&&cOk;
-    if(ok){ total++; topicStats[q.topic].ok++; }
-    markCells(q.id, maxRows, dOk, cOk);
+  visible.forEach(q=>{
+    if(topicStats[q.topic]) topicStats[q.topic].total++;
+    const maxRows=Math.max(q.rows,q.d.length,q.c.length,1);
+    const user=readEntries(q.id,maxRows);
+    const dOk=norm(user.d)===norm(q.d);
+    const cOk=norm(user.c)===norm(q.c);
+    const ok=dOk&&cOk;
+    if(ok){total++;if(topicStats[q.topic])topicStats[q.topic].ok++;}
+    markCells(q.id,maxRows,dOk,cOk);
+    updateHistoryEntry(q.id,ok); // 履歴に蓄積
 
-    const qblock = document.getElementById(`qb-${q.id}`);
-    if(qblock){ qblock.className='qblock '+(ok?'answered':'wrong'); }
+    const qblock=document.getElementById(`qb-${q.id}`);
+    if(qblock){
+      qblock.className='qblock '+(ok?'answered':'wrong');
+      // バッジ更新
+      const badge=qblock.querySelector('.hist-badge,.qtag~*');
+      const top=qblock.querySelector('.q-top div');
+      if(top){
+        const existing=top.querySelector('.hist-badge');
+        const newBadge=document.createElement('span');
+        const h=loadHistory();const hist=h[q.id]||{attempts:0,wrong:0};
+        newBadge.className='hist-badge '+(hist.wrong===0?'ok-badge':'ng-badge');
+        newBadge.textContent=hist.wrong===0?'✓ 全正解':`✗ ${hist.wrong}/${hist.attempts}回ミス`;
+        if(existing)existing.replaceWith(newBadge);
+        else top.appendChild(newBadge);
+      }
+    }
 
-    const resEl = document.getElementById(`qr-${q.id}`);
+    const resEl=document.getElementById(`qr-${q.id}`);
     if(resEl){
-      const ansText = `【正解】借方：${fmtEntry(q.d)}　／　貸方：${fmtEntry(q.c)}`;
-      resEl.className = 'q-result '+(ok?'ok':'ng');
-      resEl.innerHTML = ok ? `✓ 正解！` : `✗ 不正解　${ansText}`;
+      const ansText=`【正解】借方：${fmtEntry(q.d)}　／　貸方：${fmtEntry(q.c)}`;
+      resEl.className='q-result '+(ok?'ok':'ng');
+      resEl.innerHTML=ok?`✓ 正解！`:`✗ 不正解　${ansText}`;
     }
   });
 
-  const displayedTotal = QUESTIONS.filter(q=>filterState[q.topic]).length;
-  const pct = Math.round(total/displayedTotal*100);
+  renderFilterBtns(); // 間違い件数を更新
 
-  document.getElementById('final-score').textContent = `${total} / ${displayedTotal}点`;
-  const pm = document.getElementById('pass-msg');
-  if(pct>=70){ pm.textContent='✓ 合格ライン（70%以上）達成！'; pm.style.color='#5efb78'; }
-  else{ pm.textContent=`✗ あと ${Math.ceil(displayedTotal*0.7)-total} 問正解で合格ライン`; pm.style.color='#ff8a80'; }
+  const pct=Math.round(total/visible.length*100);
+  document.getElementById('final-score').textContent=`${total} / ${visible.length}点`;
+  const pm=document.getElementById('pass-msg');
+  if(pct>=70){pm.textContent='✓ 合格ライン（70%以上）達成！';pm.style.color='#5efb78';}
+  else{pm.textContent=`✗ あと ${Math.ceil(visible.length*0.7)-total} 問正解で合格ライン`;pm.style.color='#ff8a80';}
 
-  // 分野別スコア
   let bdHTML='';
   allTopics.forEach(t=>{
-    if(!filterState[t]||topicStats[t].total===0) return;
-    const {ok,total:tot}=topicStats[t];
+    if(topicStats[t].total===0)return;
+    const{ok,total:tot}=topicStats[t];
     const p=Math.round(ok/tot*100);
-    const cls=p>=70?'':'mid';
-    bdHTML+=`<div class="topic-score">
-      <h4>${TOPICS[t]}</h4>
-      <div>${ok} / ${tot} 問正解（${p}%）</div>
-      <div class="bar-w"><div class="bar ${cls}" style="width:${p}%"></div></div>
-    </div>`;
+    bdHTML+=`<div class="topic-score"><h4>${TOPICS[t]}</h4><div>${ok} / ${tot} 問正解（${p}%）</div><div class="bar-w"><div class="bar ${p>=70?'':'mid'}" style="width:${p}%"></div></div></div>`;
   });
   document.getElementById('breakdown').innerHTML=bdHTML;
   document.getElementById('score-panel').style.display='block';
@@ -577,17 +648,16 @@ function submitAll(){
 }
 
 function updateProgress(){
-  const total = QUESTIONS.filter(q=>filterState[q.topic]).length;
+  const visible=getVisibleQuestions();
   let answered=0;
-  QUESTIONS.forEach(q=>{
-    if(!filterState[q.topic]) return;
-    const maxRows = Math.max(q.rows, q.d.length, q.c.length, 1);
+  visible.forEach(q=>{
+    const maxRows=Math.max(q.rows,q.d.length,q.c.length,1);
     for(let r=1;r<=maxRows;r++){
-      const da=document.getElementById(`q${q.id}_d${r}a`);
-      const dv=document.getElementById(`q${q.id}_d${r}v`);
-      if(da&&dv&&da.value&&(parseInt(dv.value)||0)>0){ answered++; break; }
+      const da=document.getElementById(`q${q.id}_d${r}a`),dv=document.getElementById(`q${q.id}_d${r}v`);
+      if(da&&dv&&da.value&&(parseInt(dv.value)||0)>0){answered++;break;}
     }
   });
+  const total=visible.length;
   const pct=total>0?Math.round(answered/total*100):0;
   document.getElementById('prog-text').textContent=`${answered} / ${total} 問 回答済み`;
   document.getElementById('prog-bar').style.width=pct+'%';
@@ -595,12 +665,12 @@ function updateProgress(){
 }
 
 function resetAll(){
-  if(!confirm('すべての回答をリセットしますか？')) return;
+  if(!confirm('今回の回答をリセットしますか？（履歴は消えません）')) return;
   document.querySelectorAll('select').forEach(s=>s.selectedIndex=0);
   document.querySelectorAll('input[type=number]').forEach(i=>i.value='');
   document.querySelectorAll('.ok-cell,.ng-cell').forEach(el=>el.classList.remove('ok-cell','ng-cell'));
   document.querySelectorAll('.qblock').forEach(el=>el.className='qblock');
-  document.querySelectorAll('.q-result').forEach(el=>{ el.className='q-result'; el.innerHTML=''; });
+  document.querySelectorAll('.q-result').forEach(el=>{el.className='q-result';el.innerHTML='';});
   document.getElementById('score-panel').style.display='none';
   updateProgress();
 }
